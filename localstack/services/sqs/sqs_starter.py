@@ -2,6 +2,7 @@ import os
 import types
 import logging
 import traceback
+from html import escape
 from moto.sqs import responses as sqs_responses
 from moto.sqs.models import Queue
 from moto.core.utils import camelcase_to_underscores
@@ -10,7 +11,7 @@ from localstack import config
 from localstack.config import LOCALSTACK_HOSTNAME, TMP_FOLDER
 from localstack.utils.aws import aws_stack
 from localstack.utils.common import (
-    wait_for_port_open, save_file, short_uid, TMP_FILES, get_free_tcp_port, to_str, escape_html)
+    wait_for_port_open, save_file, short_uid, TMP_FILES, get_free_tcp_port, to_str)
 from localstack.services.infra import start_proxy_for_service, do_run, start_moto_server, log_startup_message
 from localstack.services.install import INSTALL_DIR_ELASTICMQ, SQS_BACKEND_IMPL, install_elasticmq
 
@@ -81,7 +82,7 @@ def patch_moto():
 
         def _escape(val):
             try:
-                return val and escape_html(to_str(val))
+                return val and escape(to_str(val))
             except Exception:
                 return val
 
