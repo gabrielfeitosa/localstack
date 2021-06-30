@@ -29,7 +29,7 @@ from datetime import datetime, date, timezone
 from contextlib import closing
 from queue import Queue
 from urllib.parse import urlparse, parse_qs
-from multiprocessing import Pool
+from multiprocessing.dummy import Pool
 from localstack import config
 from localstack.utils import bootstrap
 from localstack.config import DEFAULT_ENCODING
