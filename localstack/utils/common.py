@@ -25,6 +25,7 @@ from contextlib import closing
 from datetime import date, datetime
 from io import BytesIO
 from multiprocessing.dummy import Pool
+from typing import Callable, List
 
 import dns.resolver
 import requests
@@ -550,19 +551,6 @@ def get_docker_image_names(strip_latest=True):
     except Exception as e:
         LOG.info('Unable to list Docker images via "%s": %s' % (cmd, e))
         return []
-
-
-def rm_docker_container(container_name_or_id, check_existence=False, safe=False):
-    if not container_name_or_id:
-        return
-    if check_existence and container_name_or_id not in get_docker_container_names():
-        # TODO: check names as well as container IDs!
-        return
-    try:
-        run("%s rm -f %s" % (config.DOCKER_CMD, container_name_or_id), print_error=False)
-    except Exception:
-        if not safe:
-            raise
 
 
 def path_from_url(url):
@@ -1594,12 +1582,9 @@ def run_for_max_seconds(max_secs, _function, *args, **kwargs):
         time.sleep(0.5)
 
 
-def run(cmd, cache_duration_secs=0, **kwargs):
-    def do_run(cmd):
-        return bootstrap.run(cmd, **kwargs)
-
+def do_run(cmd: str, run_cmd: Callable, cache_duration_secs: int):
     if cache_duration_secs <= 0:
-        return do_run(cmd)
+        return run_cmd()
 
     hash = md5(cmd)
     cache_file = CACHE_FILE_PATTERN.replace("*", hash)
@@ -1613,12 +1598,26 @@ def run(cmd, cache_duration_secs=0, **kwargs):
             result = f.read()
             f.close()
             return result
-    result = do_run(cmd)
+    result = run_cmd()
     f = open(cache_file, "w+")
     f.write(result)
     f.close()
     clean_cache()
     return result
+
+
+def run(cmd, cache_duration_secs=0, **kwargs):
+    def run_cmd():
+        return bootstrap.run(cmd, **kwargs)
+
+    return do_run(cmd, run_cmd, cache_duration_secs)
+
+
+def safe_run(cmd: List[str], cache_duration_secs=0, **kwargs) -> str:
+    def run_cmd():
+        return bootstrap.run(cmd, shell=False, **kwargs).stdout
+
+    return do_run(" ".join(cmd), run_cmd, cache_duration_secs)
 
 
 def clone(item):
