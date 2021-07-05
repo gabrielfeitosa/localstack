@@ -25,7 +25,7 @@ from contextlib import closing
 from datetime import date, datetime
 from io import BytesIO
 from multiprocessing.dummy import Pool
-from typing import Callable, List
+from typing import Callable, List, Union
 
 import dns.resolver
 import requests
@@ -1613,7 +1613,7 @@ def run(cmd, cache_duration_secs=0, **kwargs):
     return do_run(cmd, run_cmd, cache_duration_secs)
 
 
-def safe_run(cmd: List[str], cache_duration_secs=0, **kwargs) -> str:
+def safe_run(cmd: List[str], cache_duration_secs=0, **kwargs) -> Union[str, subprocess.Popen]:
     def run_cmd():
         return bootstrap.run(cmd, shell=False, **kwargs).stdout
 
